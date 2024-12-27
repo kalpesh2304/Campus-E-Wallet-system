@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="/style.css">
+    <title>Document</title>
+    <style>
+        nav {
+                background-color: #563d7c;
+                color: #fff;
+                padding: 30px 60px;
+                display: flex;
+                justify-content: space-between; 
+            }
+
+            nav ul {
+                display: flex;
+                justify-content: space-around;
+                align-items: center;
+            }
+
+            nav li {
+                list-style: none;
+            }
+
+            nav li a {
+                color: #fff;
+                text-decoration: none;
+                font-weight: bold;
+                padding: 5px 8px;
+            }
+
+            nav li a:hover {
+                color: dodgerblue;
+                text-decoration: none;
+            }
+            d-flex {
+                border-color: black;
+            }
+            .col-4 {
+                text-align: center;
+                align-content: center;
+                justify-content: center;
+                font-size: 25px;
+            }         
+            .row {
+                margin-top: 20px;
+                margin-bottom: 20px;
+            }   
+
+            .btn {
+                margin-left: 10px;
+                margin-right: 10px;
+                padding: 20px;
+            }
+    </style>
+</head>
+<body>
+    <nav>
+        <h4>E-Wallet</h4>
+        <ul>
+            <li><a href="/">Home</a></li>
+            <li><a href="/about">About</a></li>
+            <li><a href="/loggout">Log out</a></li>
+        </ul>
+    </nav>    
+
+    <div class="container mt-4">
+        <div class="jumbotron">
+            <p class="lead">Name: {{ name }}</p>
+            <p class="lead">id: {{ id }} </p>
+            <p class="lead">username: {{ username }}</p>
+        </div>
+    </div>
+    <div class="d-flex justify-content-center">
+        <h1><b>Balance: {{ balance }}</b></h1>
+    </div>
+    <div class="row">
+        <div class="col">
+            <div class="container mt-4">
+                <div class="card" >
+                    <div class="card-header">
+                        Transaction Form 
+                    </div>
+                    <div class="card-body">
+                        <form>
+                            <div class="form-group">
+                                <label for="id">Id: </label>
+                                <input type="number" class="form-control" id="id" name="id">
+                            </div>
+                            <div class="form-group">
+                                <label for="amount">Amount: </label>
+                                <input type="number" class="form-control" id="amount" name="amount">
+                            </div>
+                            <div class="form-group">
+                                <label for="location">Location: </label>
+                                <input type="location" class="form-control" id="location" name="location">
+                            </div>
+                            <button type='button' id="add-name-btn" class="btn btn-primary">Submit</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="container">
+        
+      <br>
+      <table class="table table-striped" id="table">
+        <thead>
+          <tr>
+            <th>No.</th>
+            <th>Id</th>
+            <th>Amount</th>
+            <th>Location</th>
+            <th>Timestamp</th>
+          </tr>
+        </thead>
+        <tbody>
+          
+        </tbody>
+      </table>
+    </div>
+    
+    <script>
+
+        document.addEventListener('DOMContentLoaded', function() {
+            fetch('http://localhost:3000/getAll')
+            .then(response => response.json())
+            .then(data => loadHTMLTable(data['data']));
+            
+        });
+
+        const addBtn = document.querySelector('#add-name-btn');
+
+        addBtn.onclick = function () {1
+            const nameInput = document.querySelector('#id');
+            const id = nameInput.value;
+            nameInput.value = "";
+            const amountInput = document.querySelector('#amount');
+            const amount = amountInput.value;
+            amountInput.value = "";
+            const locationInput = document.querySelector('#location');
+            const location = locationInput.value;
+            locationInput.value = "";
+            
+            //console.log(id, amount, location)
+
+            fetch('http://localhost:3000/trans/insert', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ id, amount, location })
+            })
+            .then(response => response.json())
+            .then(data => insertRowIntoTable(data['data']));
+        }   
+
+        function insertRowIntoTable(data) {
+            //console.log(data);
+            const table = document.getElementById('table');
+            const isTableData = table.querySelector('.no-data');
+
+            let tableHtml = "<tr>";
+
+            for (var key in data) {
+                if (data.hasOwnProperty(key)) {
+                    if (key === 'dateAdded') {
+                        data[key] = new Date(data[key]).toLocaleString();
+                    }
+                    tableHtml += `<td>${data[key]}</td>`;
+                }
+            }
+
+            //tableHtml += `<td><button class="delete-row-btn" data-id=${data.id}>Delete</td>`;
+            //tableHtml += `<td><button class="edit-row-btn" data-id=${data.id}>Edit</td>`;
+
+            tableHtml += "</tr>";
+
+            if (isTableData) {
+                table.innerHTML = tableHtml;
+            } else {
+                const newRow = table.insertRow();
+                newRow.innerHTML = tableHtml;
+            }
+        }
+
+        function loadHTMLTable(data) {
+            const table = document.querySelector('table tbody');
+            if(data.length === 0) {
+                table.innerHTML = "<tr><td class = 'no-data' colspan = '5'>No Data</td></tr>";
+            }
+
+            let tableHtml = "";
+
+            data.forEach(function ({t_id, amount, location, date_added}) {
+                tableHtml += "<tr>";
+                tableHtml += `<td>${t_id}</td>`;
+                tableHtml += `<td>${amount}</td>`;
+                tableHtml += `<td>${location}</td>`;
+                tableHtml += `<td>${new Date(date_added).toLocaleString()}</td>`;
+                //tableHtml += `<td><button class="delete-row-btn" data-id=${id}>Delete</td>`;
+                //tableHtml += `<td><button class="edit-row-btn" data-id=${id}>Edit</td>`;
+                tableHtml += "</tr>";
+            });
+
+            table.innerHTML = tableHtml;
+        }
+    </script>
+
+</body>
+</html>
